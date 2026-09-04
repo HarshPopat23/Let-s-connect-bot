@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/OSSConnect/ollm-open-source-situations/schema.json",
+  "title": "OLLM open-source situation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "group",
+    "category",
+    "title",
+    "journey_stage",
+    "difficulty",
+    "applicable_roles",
+    "situation",
+    "chat_informed",
+    "source_keys",
+    "source_urls"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^OSS-[0-9]{2}-[0-9]{3}$"
+    },
+    "group": {
+      "type": "string",
+      "pattern": "^[0-9]{2}-[a-z0-9-]+$"
+    },
+    "category": {
+      "type": "string",
+      "pattern": "^[0-9]{2}-[a-z0-9-]+$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 3
+    },
+    "journey_stage": {
+      "enum": [
+        "discover",
+        "learn",
+        "contribute",
+        "collaborate",
+        "grow",
+        "lead",
+        "maintain",
+        "sustain",
+        "program",
+        "ecosystem"
+      ]
+    },
+    "difficulty": {
+      "enum": ["beginner", "intermediate", "advanced"]
+    },
+    "applicable_roles": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "situation": {
+      "type": "string",
+      "minLength": 25
+    },
+    "chat_informed": {
+      "type": "boolean"
+    },
+    "source_keys": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_urls": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://"
+      }
+    }
+  }
+}

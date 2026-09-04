@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import sys
 
 if hasattr(sys.stdout, "reconfigure"):
-    try:
+    with contextlib.suppress(Exception):
         sys.stdout.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
 
 from ollm.config import Settings
 from ollm.logging_config import configure_logging

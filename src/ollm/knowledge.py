@@ -71,7 +71,7 @@ def load_knowledge(directory: Path) -> list[DocumentChunk]:
     chunks: list[DocumentChunk] = []
     for path in sorted(directory.rglob("*.md")):
         metadata, body = _parse_markdown(path)
-        if metadata.get("index", True) is False:
+        if metadata.get("index", True) is False or metadata.get("content_type") == "situations-only":
             continue
         title = str(metadata.get("title") or path.stem.replace("-", " ").title())
         source_url = str(metadata.get("source_url") or "")

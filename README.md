@@ -147,9 +147,26 @@ All configuration lives in `.env`. The committed `.env.example` contains empty s
 
 Important controls include `DAILY_QUESTION_LIMIT`, `CACHE_TTL_SECONDS`, `RETRIEVAL_SCORE_THRESHOLD`, `RETRIEVAL_LIMIT`, `MAX_CONTEXT_CHARACTERS` and the three model names.
 
-## Oracle Cloud deployment
+## Cloud Deployment
 
-See [Oracle Deployment](docs/DEPLOY_ORACLE.md). The default long-polling mode requires no public web endpoint. Qdrant and Ollama bind to localhost on the host and must not be publicly exposed.
+- **Render.com (Free 24/7 with Groq + Qdrant Cloud)**: See [Render Deployment Guide](docs/DEPLOY_RENDER.md).
+- **Oracle Cloud (Always Free VM)**: See [Oracle Deployment](docs/DEPLOY_ORACLE.md).
+
+## Open Source Situations Dataset (2,500 Situations)
+
+OLLM includes a comprehensive dataset of 2,500 real-world open-source contributor situations catalogued across 50 categories in 10 major groups:
+
+- **Dataset**: [dataset/situations.jsonl](dataset/situations.jsonl), [dataset/catalog.csv](dataset/catalog.csv), [dataset/schema.json](dataset/schema.json)
+- **Documentation**: [INDEX.md](INDEX.md), [docs/DATASET_CARD.md](docs/DATASET_CARD.md), [docs/TAXONOMY.md](docs/TAXONOMY.md), [docs/PROVENANCE.md](docs/PROVENANCE.md)
+- **Search situations CLI**:
+  ```bash
+  python scripts/search_situations.py "first pull request"
+  python scripts/search_situations.py --category 01-onboarding-and-orientation --difficulty beginner
+  ```
+- **Validation**:
+  ```bash
+  python scripts/validate_dataset.py
+  ```
 
 ## Tests
 

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import logging
+import os
 
 from telegram import BotCommand
 from telegram.ext import Application
@@ -9,9 +11,6 @@ from ollm.bot import OLLMBot
 from ollm.config import Settings
 from ollm.logging_config import configure_logging
 from ollm.services import Services
-
-import asyncio
-import os
 
 logger = logging.getLogger(__name__)
 
