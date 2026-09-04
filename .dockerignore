@@ -1,0 +1,14 @@
+.env
+.git
+.github
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+data
+qdrant_storage
+ollama_storage
+sanitized-output
+tests
+

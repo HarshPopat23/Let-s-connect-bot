@@ -1,0 +1,84 @@
+services:
+  qdrant:
+    image: ${QDRANT_IMAGE:-qdrant/qdrant:latest}
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+    ports:
+      - "127.0.0.1:6333:6333"
+    healthcheck:
+      test: ["CMD", "/qdrant/qdrant", "--version"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  ollama:
+    image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "127.0.0.1:11434:11434"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+
+  model-init:
+    image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
+    profiles: ["setup"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
+      MODEL_EASY: ${MODEL_EASY:-qwen3:4b}
+      MODEL_STANDARD: ${MODEL_STANDARD:-mistral:7b-instruct}
+      MODEL_COMPLEX: ${MODEL_COMPLEX:-mistral-nemo:12b}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        ollama pull "$${EMBEDDING_MODEL}" &&
+        ollama pull "$${MODEL_EASY}" &&
+        ollama pull "$${MODEL_STANDARD}" &&
+        ollama pull "$${MODEL_COMPLEX}"
+
+  index:
+    build: .
+    profiles: ["setup"]
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      QDRANT_URL: http://qdrant:6333
+      KNOWLEDGE_DIRECTORY: /app/knowledge
+      STATE_DATABASE: /app/data/ollm.sqlite3
+    command: ["ollm-index"]
+
+  bot:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      QDRANT_URL: http://qdrant:6333
+      KNOWLEDGE_DIRECTORY: /app/knowledge
+      STATE_DATABASE: /app/data/ollm.sqlite3
+    volumes:
+      - bot_data:/app/data
+
+volumes:
+  qdrant_data:
+  ollama_data:
+  bot_data:
