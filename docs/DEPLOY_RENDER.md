@@ -26,17 +26,17 @@ This setup runs your Telegram Bot 24/7 on Render's free tier, using **Groq** for
 
 ---
 
-## Manual Background Worker Setup (Alternative)
+## Manual Web Service Setup (Alternative)
 
 If setting up manually:
-1. Click **New +** $\rightarrow$ **Background Worker**.
+1. Click **New +** $\rightarrow$ **Web Service**.
 2. Connect your GitHub repo `HarshPopat23/Let-s-connect-bot`.
 3. Set the following:
    * **Name:** `let-s-connect-bot`
    * **Runtime:** `Python 3`
    * **Build Command:** `pip install -e .`
    * **Start Command:** `ollm-index && ollm`
-   * **Instance Type:** `Free`
+   * **Instance Type:** `Free ($0/month)`
 4. Add the Environment Variables under the **Environment** tab:
    * `TELEGRAM_BOT_TOKEN`
    * `GROQ_API_KEY`
@@ -47,4 +47,4 @@ If setting up manually:
    * `MODEL_EASY` = `openai/gpt-oss-20b`
    * `MODEL_STANDARD` = `openai/gpt-oss-120b`
    * `MODEL_COMPLEX` = `openai/gpt-oss-120b`
-5. Click **Create Background Worker**.
+5. Click **Create Web Service**.

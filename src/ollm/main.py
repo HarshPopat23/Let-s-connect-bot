@@ -10,7 +10,31 @@ from ollm.config import Settings
 from ollm.logging_config import configure_logging
 from ollm.services import Services
 
+import asyncio
+import os
+
 logger = logging.getLogger(__name__)
+
+
+async def _start_health_server(port: int) -> asyncio.Server:
+    async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        try:
+            await reader.readline()
+            response = b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 2\r\nConnection: close\r\n\r\nOK"
+            writer.write(response)
+            await writer.drain()
+        except Exception:
+            pass
+        finally:
+            try:
+                writer.close()
+                await writer.wait_closed()
+            except Exception:
+                pass
+
+    server = await asyncio.start_server(handle_client, "0.0.0.0", port)
+    logger.info("Health check server listening on port %d", port)
+    return server
 
 
 def main() -> None:
@@ -18,8 +42,10 @@ def main() -> None:
     configure_logging(settings.log_level)
     services = Services.create(settings)
     application = OLLMBot(settings, services.rag, services.state).build()
+    health_server: asyncio.Server | None = None
 
     async def post_init(app: Application) -> None:
+        nonlocal health_server
         await services.rag.initialize()
         await app.bot.set_my_commands(
             [
@@ -30,10 +56,16 @@ def main() -> None:
                 BotCommand("help", "How to use OLLM"),
             ]
         )
+        port_env = os.environ.get("PORT")
+        if port_env and port_env.isdigit():
+            health_server = await _start_health_server(int(port_env))
         logger.info("OLLM initialized with knowledge version %s", services.rag.version)
 
     async def post_shutdown(app: Application) -> None:
         del app
+        if health_server:
+            health_server.close()
+            await health_server.wait_closed()
         await services.close()
 
     application.post_init = post_init
@@ -43,3 +75,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
