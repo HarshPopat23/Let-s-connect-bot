@@ -6,12 +6,23 @@ from collections.abc import Sequence
 import httpx
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
+import os
 import re
+import tempfile
+from pathlib import Path
 from typing import Any
 
 from fastembed import TextEmbedding
 
 logger = logging.getLogger(__name__)
+
+# Ensure writable cache directory for HuggingFace and FastEmbed on Render/Linux
+_DEFAULT_CACHE_DIR = Path(tempfile.gettempdir()) / "fastembed_cache"
+_DEFAULT_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+os.environ.setdefault("HF_HOME", str(_DEFAULT_CACHE_DIR / "hf"))
+os.environ.setdefault("FASTEMBED_CACHE_PATH", str(_DEFAULT_CACHE_DIR))
+os.environ.setdefault("XDG_CACHE_HOME", str(_DEFAULT_CACHE_DIR))
+os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 
 
 class OllamaError(RuntimeError):
@@ -46,7 +57,11 @@ class OllamaClient:
 
     def _get_fastembed(self) -> TextEmbedding:
         if self._fastembed_instance is None:
-            self._fastembed_instance = TextEmbedding(model_name=self._fastembed_model_name)
+            cache_path = str(_DEFAULT_CACHE_DIR)
+            self._fastembed_instance = TextEmbedding(
+                model_name=self._fastembed_model_name,
+                cache_dir=cache_path,
+            )
         return self._fastembed_instance
 
     async def close(self) -> None:

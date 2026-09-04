@@ -24,3 +24,12 @@ services:
         value: openai/gpt-oss-120b
       - key: MODEL_COMPLEX
         value: openai/gpt-oss-120b
+      - key: HF_HOME
+        value: /tmp/hf
+      - key: FASTEMBED_CACHE_PATH
+        value: /tmp/fastembed
+      - key: HF_HUB_DISABLE_SYMLINKS_WARNING
+        value: "1"
+      - key: HF_HUB_ENABLE_HF_TRANSFER
+        value: "0"
+
