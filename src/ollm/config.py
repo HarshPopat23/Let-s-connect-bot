@@ -28,13 +28,18 @@ class Settings(BaseSettings):
     admin_user_ids: Annotated[list[int], NoDecode] = Field(default_factory=list)
 
     ollama_base_url: str = "http://localhost:11434"
+    groq_api_key: str = ""
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+    embedding_provider: str = "auto"
+    fastembed_model: str = "BAAI/bge-small-en-v1.5"
+
     qdrant_url: str = "http://localhost:6333"
     qdrant_api_key: str = ""
 
     embedding_model: str = "nomic-embed-text"
-    model_easy: str = "qwen3:4b"
-    model_standard: str = "mistral:7b-instruct"
-    model_complex: str = "mistral-nemo:12b"
+    model_easy: str = "qwen/qwen3.6-27b"
+    model_standard: str = "qwen/qwen3.6-27b"
+    model_complex: str = "openai/gpt-oss-120b"
 
     qdrant_collection: str = "ollm_knowledge"
     retrieval_limit: int = Field(default=6, ge=1, le=12)

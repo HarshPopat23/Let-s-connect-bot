@@ -6,6 +6,11 @@ from collections.abc import Sequence
 import httpx
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
+import re
+from typing import Any
+
+from fastembed import TextEmbedding
+
 logger = logging.getLogger(__name__)
 
 
@@ -14,12 +19,35 @@ class OllamaError(RuntimeError):
 
 
 class OllamaClient:
-    def __init__(self, base_url: str, timeout_seconds: float = 180) -> None:
+    def __init__(
+        self,
+        base_url: str = "http://localhost:11434",
+        timeout_seconds: float = 180,
+        api_key: str = "",
+        embedding_provider: str = "auto",
+        fastembed_model: str = "BAAI/bge-small-en-v1.5",
+    ) -> None:
         self.base_url = base_url.rstrip("/")
+        self.api_key = api_key.strip()
+        self.is_groq = bool(self.api_key)
+        self.embedding_provider = embedding_provider
+        self._fastembed_model_name = fastembed_model
+        self._fastembed_instance: TextEmbedding | None = None
+
+        headers = {}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+
         self._client = httpx.AsyncClient(
             base_url=self.base_url,
+            headers=headers,
             timeout=httpx.Timeout(timeout_seconds),
         )
+
+    def _get_fastembed(self) -> TextEmbedding:
+        if self._fastembed_instance is None:
+            self._fastembed_instance = TextEmbedding(model_name=self._fastembed_model_name)
+        return self._fastembed_instance
 
     async def close(self) -> None:
         await self._client.aclose()
@@ -31,6 +59,21 @@ class OllamaClient:
         reraise=True,
     )
     async def list_models(self) -> set[str]:
+        if self.is_groq:
+            try:
+                response = await self._client.get("/models")
+                response.raise_for_status()
+                return {m["id"] for m in response.json().get("data", []) if "id" in m}
+            except Exception as exc:
+                logger.warning("Could not fetch Groq models dynamically: %s", exc)
+                return {
+                    "qwen/qwen3.6-27b",
+                    "qwen/qwen3.8-27b",
+                    "openai/gpt-oss-120b",
+                    "openai/gpt-oss-20b",
+                    "groq/compound",
+                }
+
         try:
             response = await self._client.get("/api/tags")
             response.raise_for_status()
@@ -52,6 +95,17 @@ class OllamaClient:
     async def embed(self, texts: Sequence[str], model: str) -> list[list[float]]:
         if not texts:
             return []
+
+        use_fastembed = (
+            self.embedding_provider == "fastembed"
+            or (self.embedding_provider == "auto" and self.is_groq)
+        )
+
+        if use_fastembed:
+            fe = self._get_fastembed()
+            embeddings = list(fe.embed(list(texts)))
+            return [emb.tolist() for emb in embeddings]
+
         try:
             response = await self._client.post(
                 "/api/embed",
@@ -81,6 +135,32 @@ class OllamaClient:
         user_prompt: str,
         temperature: float,
     ) -> str:
+        if self.is_groq:
+            try:
+                response = await self._client.post(
+                    "/chat/completions",
+                    json={
+                        "model": model,
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt},
+                        ],
+                        "temperature": temperature,
+                        "max_tokens": 1024,
+                    },
+                )
+                response.raise_for_status()
+                data = response.json()
+                content = data["choices"][0]["message"]["content"].strip()
+                # Clean reasoning/thinking tags if model outputs <think>...</think>
+                content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+                return content
+            except httpx.HTTPStatusError as exc:
+                detail = exc.response.text[:500]
+                raise OllamaError(f"Groq chat request failed for {model}: {detail}") from exc
+            except httpx.HTTPError as exc:
+                raise OllamaError(f"Groq chat request failed for {model}: {exc}") from exc
+
         try:
             response = await self._client.post(
                 "/api/chat",

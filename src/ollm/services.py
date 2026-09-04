@@ -19,7 +19,14 @@ class Services:
 
     @classmethod
     def create(cls, settings: Settings) -> Services:
-        ollama = OllamaClient(settings.ollama_base_url, settings.ollama_timeout_seconds)
+        base_url = settings.groq_base_url if settings.groq_api_key else settings.ollama_base_url
+        ollama = OllamaClient(
+            base_url=base_url,
+            timeout_seconds=settings.ollama_timeout_seconds,
+            api_key=settings.groq_api_key,
+            embedding_provider=settings.embedding_provider,
+            fastembed_model=settings.fastembed_model,
+        )
         vector_store = VectorStore(
             settings.qdrant_url,
             settings.qdrant_collection,

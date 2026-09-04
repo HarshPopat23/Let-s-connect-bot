@@ -75,7 +75,7 @@ class ModelRouter:
         tier, reason = self.classify(question)
         requested = self._configured_model(tier)
 
-        if not available or self._is_available(requested, available):
+        if self.settings.groq_api_key or not available or self._is_available(requested, available):
             return ModelSelection(tier, requested, requested, reason)
 
         fallback_order = {

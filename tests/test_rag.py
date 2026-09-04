@@ -39,6 +39,9 @@ def make_settings(tmp_path: Path) -> Settings:
         _env_file=None,
         knowledge_directory=tmp_path,
         state_database=tmp_path / "state.sqlite3",
+        model_easy="qwen3:4b",
+        model_standard="mistral:7b-instruct",
+        model_complex="mistral-nemo:12b",
     )
 
 

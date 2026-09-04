@@ -1,0 +1,25 @@
+services:
+  - type: worker
+    name: let-s-connect-bot
+    runtime: python
+    buildCommand: pip install -e .
+    startCommand: ollm-index && ollm
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+      - key: EMBEDDING_PROVIDER
+        value: fastembed
+      - key: FASTEMBED_MODEL
+        value: BAAI/bge-small-en-v1.5
+      - key: MODEL_EASY
+        value: openai/gpt-oss-20b
+      - key: MODEL_STANDARD
+        value: openai/gpt-oss-120b
+      - key: MODEL_COMPLEX
+        value: openai/gpt-oss-120b

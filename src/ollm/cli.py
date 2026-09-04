@@ -3,6 +3,12 @@ from __future__ import annotations
 import asyncio
 import sys
 
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 from ollm.config import Settings
 from ollm.logging_config import configure_logging
 from ollm.services import Services
