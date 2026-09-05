@@ -13,6 +13,13 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 logger = logging.getLogger(__name__)
 
+# Ensure thread and memory limits for ONNX/BLAS on memory-constrained hosts (e.g. Render 512MB)
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
+os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
+
 # Ensure writable cache directory for HuggingFace and FastEmbed on Render/Linux
 _DEFAULT_CACHE_DIR = Path(tempfile.gettempdir()) / "fastembed_cache"
 _DEFAULT_CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -54,10 +61,12 @@ class OllamaClient:
 
     def _get_fastembed(self) -> TextEmbedding:
         if self._fastembed_instance is None:
-            cache_path = str(_DEFAULT_CACHE_DIR)
+            cache_path = os.environ.get("FASTEMBED_CACHE_PATH") or str(_DEFAULT_CACHE_DIR)
+            threads = int(os.environ.get("FASTEMBED_THREADS", "1"))
             self._fastembed_instance = TextEmbedding(
                 model_name=self._fastembed_model_name,
                 cache_dir=cache_path,
+                threads=threads,
             )
         return self._fastembed_instance
 

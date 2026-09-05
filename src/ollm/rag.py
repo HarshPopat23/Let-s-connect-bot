@@ -73,16 +73,20 @@ class RAGService:
             ["Open source contribution knowledge"], self.settings.embedding_model
         )
         await self.vector_store.recreate(vector_size=len(sample[0]))
-        batch_size = 24
+        batch_size = 12
+        import gc
         for start in range(0, len(chunks), batch_size):
             batch = chunks[start : start + batch_size]
             inputs = [f"{item.title}\n{item.section}\n{item.text}" for item in batch]
             vectors = await self.ollama.embed(inputs, self.settings.embedding_model)
             await self.vector_store.upsert(batch, vectors)
+            del batch, inputs, vectors
+            gc.collect()
         self._knowledge_version = knowledge_version(chunks)
         await self.state.set_metadata("knowledge_version", self._knowledge_version)
         await self.state.set_metadata("knowledge_chunk_count", str(len(chunks)))
         logger.info("Indexed %s knowledge chunks", len(chunks))
+        gc.collect()
         return len(chunks)
 
     async def answer(self, question: str) -> AnswerResult:

@@ -45,6 +45,9 @@ def main() -> None:
 
     async def post_init(app: Application) -> None:
         nonlocal health_server
+        port_env = os.environ.get("PORT")
+        if port_env and port_env.isdigit():
+            health_server = await _start_health_server(int(port_env))
         await services.rag.initialize()
         await app.bot.set_my_commands(
             [
@@ -55,9 +58,6 @@ def main() -> None:
                 BotCommand("help", "How to use OLLM"),
             ]
         )
-        port_env = os.environ.get("PORT")
-        if port_env and port_env.isdigit():
-            health_server = await _start_health_server(int(port_env))
         logger.info("OLLM initialized with knowledge version %s", services.rag.version)
 
     async def post_shutdown(app: Application) -> None:

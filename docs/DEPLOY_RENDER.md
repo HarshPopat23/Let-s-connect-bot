@@ -33,8 +33,8 @@ If setting up manually:
 2. Connect your GitHub repo `HarshPopat23/Let-s-connect-bot`.
 3. Set the following:
    * **Name:** `let-s-connect-bot`
-   * **Runtime:** `Python 3`
-   * **Build Command:** `pip install -e .`
+   * **Runtime:** `Python 3` (or `Docker`)
+   * **Build Command:** `pip install -e . && python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5', cache_dir='/tmp/fastembed', threads=1)"`
    * **Start Command:** `ollm-index && ollm`
    * **Instance Type:** `Free ($0/month)`
 4. Add the Environment Variables under the **Environment** tab:
@@ -44,6 +44,12 @@ If setting up manually:
    * `QDRANT_API_KEY`
    * `EMBEDDING_PROVIDER` = `fastembed`
    * `FASTEMBED_MODEL` = `BAAI/bge-small-en-v1.5`
+   * `FASTEMBED_THREADS` = `1`
+   * `OMP_NUM_THREADS` = `1`
+   * `OPENBLAS_NUM_THREADS` = `1`
+   * `MKL_NUM_THREADS` = `1`
+   * `FASTEMBED_CACHE_PATH` = `/tmp/fastembed`
+   * `HF_HOME` = `/tmp/fastembed/hf`
    * `MODEL_EASY` = `openai/gpt-oss-20b`
    * `MODEL_STANDARD` = `openai/gpt-oss-120b`
    * `MODEL_COMPLEX` = `openai/gpt-oss-120b`
