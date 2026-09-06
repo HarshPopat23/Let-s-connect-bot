@@ -75,6 +75,7 @@ async def test_grounded_answer_has_source_and_cache(tmp_path: Path) -> None:
     rag._knowledge_version = "test"
     first = await rag.answer("How do I start contributing to this project?")
     second = await rag.answer("How do I start contributing to this project?")
-    assert "https://example.test/guide" in first.answer
+    assert first.sources and first.sources[0].source_url == "https://example.test/guide"
+    assert "https://example.test/guide" not in first.answer
     assert second.cached
     assert ollama.chat_calls == 1
