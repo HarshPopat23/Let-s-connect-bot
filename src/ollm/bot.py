@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import logging
+import re
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.constants import ChatAction
+from telegram.constants import ChatAction, ParseMode
+from telegram.error import BadRequest
 from telegram.ext import (
     Application,
     ApplicationBuilder,
@@ -167,9 +169,10 @@ class OLLMBot:
             return
 
         footer = f"\n\nModel tier: {result.tier.value}. Questions remaining today: {remaining}."
-        parts = split_telegram_text(result.answer + footer)
+        formatted = format_for_telegram(result.answer) + footer
+        parts = split_telegram_text(formatted)
         for part in parts[:-1]:
-            await message.reply_text(part, disable_web_page_preview=True)
+            await send_markdown(message, part, disable_web_page_preview=True)
         short_key = result.cache_key[:20]
         keyboard = InlineKeyboardMarkup(
             [
@@ -181,7 +184,9 @@ class OLLMBot:
                 ]
             ]
         )
-        await message.reply_text(parts[-1], reply_markup=keyboard, disable_web_page_preview=True)
+        await send_markdown(
+            message, parts[-1], reply_markup=keyboard, disable_web_page_preview=True
+        )
 
     async def feedback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         del context
@@ -234,6 +239,29 @@ class OLLMBot:
     async def error_handler(self, update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
         del update
         logger.error("Unhandled Telegram update error", exc_info=context.error)
+
+
+_CITATION_MARKER = re.compile(r"\s?\[\d+\]")
+_HEADING_LINE = re.compile(r"^#{1,6}\s*(.+?)\s*$", re.MULTILINE)
+_DOUBLE_ASTERISK_BOLD = re.compile(r"\*\*(.+?)\*\*")
+_MARKDOWN_SPECIAL_CHARS = re.compile(r"[_*`\[]")
+
+
+def format_for_telegram(text: str) -> str:
+    """Convert model markdown into what Telegram's legacy Markdown mode can render."""
+    text = _CITATION_MARKER.sub("", text)
+    text = _HEADING_LINE.sub(lambda m: f"*{m.group(1)}*", text)
+    text = _DOUBLE_ASTERISK_BOLD.sub(lambda m: f"*{m.group(1)}*", text)
+    return text.strip()
+
+
+async def send_markdown(message, text: str, **kwargs) -> None:
+    """Send with Telegram Markdown rendering, falling back to plain text if it fails to parse."""
+    try:
+        await message.reply_text(text, parse_mode=ParseMode.MARKDOWN, **kwargs)
+    except BadRequest:
+        plain = _MARKDOWN_SPECIAL_CHARS.sub("", text)
+        await message.reply_text(plain, **kwargs)
 
 
 def split_telegram_text(text: str, limit: int = 3900) -> list[str]:

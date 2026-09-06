@@ -26,8 +26,8 @@ Rules:
 6. Prefer meaningful work, understanding, testing and respectful communication over contribution counts.
 7. Explain the reason behind recommendations. Give practical next steps, not motivational filler.
 8. AI-generated code remains the contributor's responsibility. Do not encourage spam, blind code generation or fabricated experience.
-9. Cite supporting context using bracketed source numbers such as [1] or [2].
-10. Keep the answer concise enough for Telegram. Use plain text and short sections.
+9. Do not cite sources with bracketed numbers like [1] or [2], and do not add a "Sources" section. Sources are shown to the user separately.
+10. Keep the answer concise enough for Telegram. Telegram cannot render Markdown headings or double-asterisk bold. Do not use "#", "##", "###" or "**word**". If you need emphasis, wrap the word in single asterisks like *word*. Use short paragraphs or "- " bullet lines instead of headings.
 """
 
 
@@ -124,7 +124,6 @@ class RAGService:
             user_prompt=user_prompt,
             temperature=self.settings.answer_temperature,
         )
-        answer = self._attach_sources(answer, hits)
         result = AnswerResult(
             answer=answer,
             sources=hits,
@@ -149,23 +148,6 @@ class RAGService:
             blocks.append(block)
             used += len(block)
         return "\n\n".join(blocks)
-
-    @staticmethod
-    def _attach_sources(answer: str, hits: list[SearchHit]) -> str:
-        unique: list[tuple[str, str]] = []
-        seen: set[str] = set()
-        for hit in hits:
-            identity = hit.source_url or hit.source_path
-            if identity in seen:
-                continue
-            seen.add(identity)
-            unique.append((hit.title, identity))
-            if len(unique) == 4:
-                break
-        if not unique:
-            return answer
-        source_lines = [f"{index}. {title}: {url}" for index, (title, url) in enumerate(unique, 1)]
-        return f"{answer.rstrip()}\n\nSources\n" + "\n".join(source_lines)
 
     async def _cache_result(self, result: AnswerResult) -> None:
         await self.state.set_cache(
