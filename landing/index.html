@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OLLM — Coming Soon</title>
+<style>
+  :root { color-scheme: dark; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: #050507;
+    color: #f5f5f7;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .glow {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      620px circle at var(--x, 50%) var(--y, 40%),
+      rgba(99, 132, 255, 0.28),
+      rgba(99, 132, 255, 0.10) 35%,
+      transparent 60%
+    );
+    z-index: 1;
+  }
+
+  .ambient {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(900px circle at 15% 20%, rgba(120, 90, 255, 0.10), transparent 55%),
+      radial-gradient(900px circle at 85% 80%, rgba(70, 180, 255, 0.08), transparent 55%);
+    z-index: 0;
+  }
+
+  .content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 0 24px;
+    max-width: 720px;
+  }
+
+  .kicker {
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: #8b8b95;
+    margin-bottom: 22px;
+  }
+
+  h1 {
+    font-size: clamp(30px, 5.5vw, 58px);
+    font-weight: 500;
+    line-height: 1.18;
+    letter-spacing: -0.01em;
+    background: linear-gradient(180deg, #ffffff 20%, #9d9da8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .punchline {
+    margin: 24px auto 0;
+    font-size: clamp(15px, 1.8vw, 18px);
+    line-height: 1.6;
+    color: #aeaeb8;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 40px;
+    padding: 10px 22px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    color: #d8d8e0;
+  }
+
+  .badge .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #7c93ff;
+    box-shadow: 0 0 10px 2px rgba(124, 147, 255, 0.7);
+  }
+</style>
+</head>
+<body>
+  <div class="ambient"></div>
+  <div class="glow" id="glow"></div>
+
+  <div class="content">
+    <div class="kicker">OSS Let's Connect &middot; OLLM</div>
+    <h1>Your open-source guide is<br />learning to speak your language.</h1>
+    <p class="punchline">
+      From first commit to confident contributor — OLLM is getting sharper, one conversation at a time.
+    </p>
+    <span class="badge"><span class="dot"></span>Coming soon</span>
+  </div>
+
+  <script>
+    var glow = document.getElementById("glow");
+    window.addEventListener("pointermove", function (event) {
+      glow.style.setProperty("--x", event.clientX + "px");
+      glow.style.setProperty("--y", event.clientY + "px");
+    });
+  </script>
+</body>
+</html>
