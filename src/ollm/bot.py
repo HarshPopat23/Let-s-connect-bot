@@ -148,6 +148,36 @@ class OLLMBot:
                 f"Please shorten the question to {self.settings.max_question_characters} characters."
             )
             return
+
+        normalized_q = re.sub(r"[^a-zA-Z\s]", "", question).strip().lower()
+        if normalized_q in {
+            "hi",
+            "hii",
+            "hiii",
+            "hello",
+            "helloo",
+            "hey",
+            "heyy",
+            "namaste",
+            "good morning",
+            "good afternoon",
+            "good evening",
+            "yo",
+            "hola",
+        }:
+            greeting = (
+                "Hello! 👋 I'm OLLM, your open-source contributor guide for OSS Let's Connect.\n\n"
+                "I'm here to help you navigate your open-source journey! You can ask me things like:\n"
+                "• *How do I choose my first open-source project?*\n"
+                "• *What is OSS Let's Connect and when are the meetings?*\n"
+                "• *How do I create a pull request on GitHub?*\n"
+                "• *What are GSoC, LFX, and Outreachy?*\n"
+                "• *How should I ask a maintainer for help?*\n\n"
+                "Feel free to ask any question!"
+            )
+            await message.reply_text(greeting, parse_mode=ParseMode.MARKDOWN)
+            return
+
         allowed, remaining = await self.state.consume_daily_quota(
             user.id, self.settings.daily_question_limit
         )
