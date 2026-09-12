@@ -198,26 +198,8 @@ class OLLMBot:
             )
             return
 
-        sources_block = ""
-        if result.sources:
-            unique_sources = []
-            seen = set()
-            for s in result.sources:
-                key = (s.title, s.section)
-                if key not in seen:
-                    seen.add(key)
-                    display = f"{s.title}" + (f" - *{s.section}*" if s.section else "")
-                    if s.source_url:
-                        unique_sources.append(f"• [{display}]({s.source_url})")
-                    else:
-                        unique_sources.append(f"• {display}")
-                if len(unique_sources) >= 3:
-                    break
-            if unique_sources:
-                sources_block = "\n\n*📖 Knowledge Base Sources:*\n" + "\n".join(unique_sources)
-
         footer = f"\n\nModel tier: {result.tier.value}. Questions remaining today: {remaining}."
-        formatted = format_for_telegram(result.answer) + sources_block + footer
+        formatted = format_for_telegram(result.answer) + footer
         parts = split_telegram_text(formatted)
         for part in parts[:-1]:
             await send_markdown(message, part, disable_web_page_preview=True)

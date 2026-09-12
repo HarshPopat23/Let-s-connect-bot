@@ -20,6 +20,14 @@ services:
         value: BAAI/bge-small-en-v1.5
       - key: EMBEDDING_MODEL
         value: nomic-embed-text
+      - key: KNOWLEDGE_DIRECTORY
+        value: knowledge
+      - key: STATE_DATABASE
+        value: data/ollm.sqlite3
+      - key: REINDEX_ON_START
+        value: "false"
+      - key: LOG_LEVEL
+        value: INFO
       - key: FASTEMBED_THREADS
         value: "1"
       - key: OMP_NUM_THREADS
