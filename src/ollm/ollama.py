@@ -43,11 +43,13 @@ class GroqClient:
         api_key: str = "",
         base_url: str = "https://api.groq.com/openai/v1",
         timeout_seconds: float = 60,
-        fastembed_model: str = "sentence-transformers/all-MiniLM-L6-v2",
+        fastembed_model: str = "BAAI/bge-small-en-v1.5",
+        embedding_provider: str = "fastembed",
         **_kwargs: object,
     ) -> None:
         self.api_key = api_key.strip()
         self.base_url = base_url.rstrip("/")
+        self.embedding_provider = embedding_provider
         self._fastembed_model_name = fastembed_model
         self._fastembed_instance: TextEmbedding | None = None
 

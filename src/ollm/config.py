@@ -29,7 +29,9 @@ class Settings(BaseSettings):
 
     groq_api_key: str = ""
     groq_base_url: str = "https://api.groq.com/openai/v1"
-    fastembed_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    embedding_provider: str = "fastembed"
+    fastembed_model: str = "BAAI/bge-small-en-v1.5"
+    embedding_model: str = "nomic-embed-text"
 
     qdrant_url: str = "http://localhost:6333"
     qdrant_api_key: str = ""

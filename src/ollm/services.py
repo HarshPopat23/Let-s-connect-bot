@@ -24,6 +24,7 @@ class Services:
             timeout_seconds=settings.groq_timeout_seconds,
             api_key=settings.groq_api_key,
             fastembed_model=settings.fastembed_model,
+            embedding_provider=settings.embedding_provider,
         )
         vector_store = VectorStore(
             settings.qdrant_url,
