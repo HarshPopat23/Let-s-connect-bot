@@ -59,11 +59,13 @@ class RAGService:
         if (
             self.settings.reindex_on_start
             or not collection_exists
-            or indexed_version != local_version
+            or (indexed_version is not None and indexed_version != local_version)
         ):
             await self.reindex(chunks=chunks)
         else:
             self._knowledge_version = local_version
+            if indexed_version is None:
+                await self.state.set_metadata("knowledge_version", local_version)
 
     async def reindex(self, chunks=None) -> int:
         chunks = chunks or load_knowledge(self.settings.knowledge_directory)
