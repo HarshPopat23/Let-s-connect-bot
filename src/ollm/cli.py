@@ -45,7 +45,7 @@ async def _check() -> None:
         await services.state.initialize()
         available = sorted(await services.ollama.list_models())
         qdrant_ready = await services.vector_store.exists()
-        print(f"Ollama models: {', '.join(available) or 'none'}")
+        print(f"Groq models: {', '.join(available) or 'none'}")
         print(f"Qdrant collection ready: {qdrant_ready}")
         print(f"Knowledge directory: {settings.knowledge_directory}")
     finally:

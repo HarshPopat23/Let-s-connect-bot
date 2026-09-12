@@ -27,18 +27,15 @@ class Settings(BaseSettings):
     telegram_allowed_chat_ids: Annotated[list[int], NoDecode] = Field(default_factory=list)
     admin_user_ids: Annotated[list[int], NoDecode] = Field(default_factory=list)
 
-    ollama_base_url: str = "http://localhost:11434"
     groq_api_key: str = ""
     groq_base_url: str = "https://api.groq.com/openai/v1"
-    embedding_provider: str = "auto"
-    fastembed_model: str = "BAAI/bge-small-en-v1.5"
+    fastembed_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     qdrant_url: str = "http://localhost:6333"
     qdrant_api_key: str = ""
 
-    embedding_model: str = "nomic-embed-text"
-    model_easy: str = "qwen/qwen3.6-27b"
-    model_standard: str = "qwen/qwen3.6-27b"
+    model_easy: str = "openai/gpt-oss-20b"
+    model_standard: str = "openai/gpt-oss-120b"
     model_complex: str = "openai/gpt-oss-120b"
 
     qdrant_collection: str = "ollm_knowledge"
@@ -46,7 +43,7 @@ class Settings(BaseSettings):
     retrieval_score_threshold: float = Field(default=0.45, ge=0, le=1)
     max_context_characters: int = Field(default=14_000, ge=2_000, le=50_000)
     answer_temperature: float = Field(default=0.15, ge=0, le=1)
-    ollama_timeout_seconds: float = Field(default=180, ge=10, le=600)
+    groq_timeout_seconds: float = Field(default=60, ge=5, le=300)
 
     daily_question_limit: int = Field(default=10, ge=1, le=1_000)
     cache_ttl_seconds: int = Field(default=86_400, ge=60)
@@ -64,7 +61,7 @@ class Settings(BaseSettings):
             return []
         return _csv_ints(value)  # type: ignore[arg-type]
 
-    @field_validator("ollama_base_url", "qdrant_url")
+    @field_validator("groq_base_url", "qdrant_url")
     @classmethod
     def strip_trailing_slash(cls, value: str) -> str:
         return value.rstrip("/")
@@ -75,3 +72,10 @@ class Settings(BaseSettings):
                 "TELEGRAM_BOT_TOKEN is empty. Copy .env.example to .env and add the token."
             )
         return self.telegram_bot_token.strip()
+
+    def require_groq_api_key(self) -> str:
+        if not self.groq_api_key.strip():
+            raise RuntimeError(
+                "GROQ_API_KEY is empty. Please set GROQ_API_KEY in your environment."
+            )
+        return self.groq_api_key.strip()

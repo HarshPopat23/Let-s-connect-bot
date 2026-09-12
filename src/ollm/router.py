@@ -75,7 +75,7 @@ class ModelRouter:
         tier, reason = self.classify(question)
         requested = self._configured_model(tier)
 
-        if self.settings.groq_api_key or not available or self._is_available(requested, available):
+        if not available or self._is_available(requested, available):
             return ModelSelection(tier, requested, requested, reason)
 
         fallback_order = {
@@ -92,6 +92,5 @@ class ModelRouter:
                     f"{reason}; configured model is unavailable",
                     used_fallback=True,
                 )
-        raise RuntimeError(
-            "No configured chat model is available in Ollama. Run the model setup command."
-        )
+        return ModelSelection(tier, requested, requested, reason)
+

@@ -69,16 +69,14 @@ class RAGService:
         chunks = chunks or load_knowledge(self.settings.knowledge_directory)
         if not chunks:
             raise RuntimeError("The knowledge directory contains no indexable documents")
-        sample = await self.ollama.embed(
-            ["Open source contribution knowledge"], self.settings.embedding_model
-        )
+        sample = await self.ollama.embed(["Open source contribution knowledge"])
         await self.vector_store.recreate(vector_size=len(sample[0]))
         batch_size = 12
         import gc
         for start in range(0, len(chunks), batch_size):
             batch = chunks[start : start + batch_size]
             inputs = [f"{item.title}\n{item.section}\n{item.text}" for item in batch]
-            vectors = await self.ollama.embed(inputs, self.settings.embedding_model)
+            vectors = await self.ollama.embed(inputs)
             await self.vector_store.upsert(batch, vectors)
             del batch, inputs, vectors
             gc.collect()
@@ -98,7 +96,7 @@ class RAGService:
         if cached:
             return self._from_cache(cached, cache_key)
 
-        query_vector = (await self.ollama.embed([question], self.settings.embedding_model))[0]
+        query_vector = (await self.ollama.embed([question]))[0]
         hits = await self.vector_store.search(
             query_vector,
             limit=self.settings.retrieval_limit,

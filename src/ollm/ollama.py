@@ -29,23 +29,25 @@ os.environ.setdefault("XDG_CACHE_HOME", str(_DEFAULT_CACHE_DIR))
 os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 
 
-class OllamaError(RuntimeError):
+class GroqError(RuntimeError):
     pass
 
 
-class OllamaClient:
+# Backwards compatibility alias
+OllamaError = GroqError
+
+
+class GroqClient:
     def __init__(
         self,
-        base_url: str = "http://localhost:11434",
-        timeout_seconds: float = 180,
         api_key: str = "",
-        embedding_provider: str = "auto",
-        fastembed_model: str = "BAAI/bge-small-en-v1.5",
+        base_url: str = "https://api.groq.com/openai/v1",
+        timeout_seconds: float = 60,
+        fastembed_model: str = "sentence-transformers/all-MiniLM-L6-v2",
+        **_kwargs: object,
     ) -> None:
-        self.base_url = base_url.rstrip("/")
         self.api_key = api_key.strip()
-        self.is_groq = bool(self.api_key)
-        self.embedding_provider = embedding_provider
+        self.base_url = base_url.rstrip("/")
         self._fastembed_model_name = fastembed_model
         self._fastembed_instance: TextEmbedding | None = None
 
@@ -80,68 +82,28 @@ class OllamaClient:
         reraise=True,
     )
     async def list_models(self) -> set[str]:
-        if self.is_groq:
-            try:
-                response = await self._client.get("/models")
-                response.raise_for_status()
-                return {m["id"] for m in response.json().get("data", []) if "id" in m}
-            except Exception as exc:
-                logger.warning("Could not fetch Groq models dynamically: %s", exc)
-                return {
-                    "qwen/qwen3.6-27b",
-                    "qwen/qwen3.8-27b",
-                    "openai/gpt-oss-120b",
-                    "openai/gpt-oss-20b",
-                    "groq/compound",
-                }
-
         try:
-            response = await self._client.get("/api/tags")
+            response = await self._client.get("/models")
             response.raise_for_status()
-        except httpx.HTTPError as exc:
-            raise OllamaError(f"Could not list Ollama models: {exc}") from exc
-        result: set[str] = set()
-        for item in response.json().get("models", []):
-            name = item.get("model") or item.get("name")
-            if name:
-                result.add(str(name))
-        return result
+            return {m["id"] for m in response.json().get("data", []) if "id" in m}
+        except Exception as exc:
+            logger.warning("Could not fetch Groq models dynamically: %s", exc)
+            return {
+                "openai/gpt-oss-20b",
+                "openai/gpt-oss-120b",
+                "groq/compound-mini",
+                "groq/compound",
+                "qwen/qwen3.8-27b",
+                "qwen/qwen3.6-27b",
+            }
 
-    @retry(
-        retry=retry_if_exception_type((httpx.TransportError, httpx.TimeoutException)),
-        wait=wait_exponential(multiplier=1, min=1, max=8),
-        stop=stop_after_attempt(3),
-        reraise=True,
-    )
-    async def embed(self, texts: Sequence[str], model: str) -> list[list[float]]:
+    async def embed(self, texts: Sequence[str], model: str = "") -> list[list[float]]:
+        del model  # FastEmbed uses the configured lightweight local model
         if not texts:
             return []
-
-        use_fastembed = (
-            self.embedding_provider == "fastembed"
-            or (self.embedding_provider == "auto" and self.is_groq)
-        )
-
-        if use_fastembed:
-            fe = self._get_fastembed()
-            embeddings = list(fe.embed(list(texts)))
-            return [emb.tolist() for emb in embeddings]
-
-        try:
-            response = await self._client.post(
-                "/api/embed",
-                json={"model": model, "input": list(texts), "truncate": True},
-            )
-            response.raise_for_status()
-            embeddings = response.json().get("embeddings")
-            if not embeddings or len(embeddings) != len(texts):
-                raise OllamaError("Ollama returned an unexpected embedding response")
-            return embeddings
-        except httpx.HTTPStatusError as exc:
-            detail = exc.response.text[:500]
-            raise OllamaError(f"Embedding request failed: {detail}") from exc
-        except httpx.HTTPError as exc:
-            raise OllamaError(f"Embedding request failed: {exc}") from exc
+        fe = self._get_fastembed()
+        embeddings = list(fe.embed(list(texts)))
+        return [emb.tolist() for emb in embeddings]
 
     @retry(
         retry=retry_if_exception_type((httpx.TransportError, httpx.TimeoutException)),
@@ -156,54 +118,31 @@ class OllamaClient:
         user_prompt: str,
         temperature: float,
     ) -> str:
-        if self.is_groq:
-            try:
-                response = await self._client.post(
-                    "/chat/completions",
-                    json={
-                        "model": model,
-                        "messages": [
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": user_prompt},
-                        ],
-                        "temperature": temperature,
-                        "max_tokens": 1024,
-                    },
-                )
-                response.raise_for_status()
-                data = response.json()
-                content = data["choices"][0]["message"]["content"].strip()
-                # Clean reasoning/thinking tags if model outputs <think>...</think>
-                content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
-                return content
-            except httpx.HTTPStatusError as exc:
-                detail = exc.response.text[:500]
-                raise OllamaError(f"Groq chat request failed for {model}: {detail}") from exc
-            except httpx.HTTPError as exc:
-                raise OllamaError(f"Groq chat request failed for {model}: {exc}") from exc
-
         try:
             response = await self._client.post(
-                "/api/chat",
+                "/chat/completions",
                 json={
                     "model": model,
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt},
                     ],
-                    "stream": False,
-                    "think": False,
-                    "options": {"temperature": temperature},
-                    "keep_alive": "10m",
+                    "temperature": temperature,
+                    "max_tokens": 1024,
                 },
             )
             response.raise_for_status()
-            content = response.json().get("message", {}).get("content", "").strip()
-            if not content:
-                raise OllamaError("Ollama returned an empty answer")
+            data = response.json()
+            content = data["choices"][0]["message"]["content"].strip()
+            # Clean reasoning/thinking tags if model outputs <think>...</think>
+            content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
             return content
         except httpx.HTTPStatusError as exc:
             detail = exc.response.text[:500]
-            raise OllamaError(f"Chat request failed for {model}: {detail}") from exc
+            raise GroqError(f"Groq chat request failed for {model}: {detail}") from exc
         except httpx.HTTPError as exc:
-            raise OllamaError(f"Chat request failed for {model}: {exc}") from exc
+            raise GroqError(f"Groq chat request failed for {model}: {exc}") from exc
+
+
+# Backwards compatibility alias
+OllamaClient = GroqClient

@@ -4,7 +4,7 @@ import asyncio
 import logging
 import os
 
-from telegram import BotCommand
+from telegram import BotCommand, Update
 from telegram.ext import Application
 
 from ollm.bot import OLLMBot
@@ -48,17 +48,28 @@ def main() -> None:
         port_env = os.environ.get("PORT")
         if port_env and port_env.isdigit():
             health_server = await _start_health_server(int(port_env))
-        await services.rag.initialize()
-        await app.bot.set_my_commands(
-            [
-                BotCommand("ask", "Ask an open-source contribution question"),
-                BotCommand("about", "About OSS Let's Connect"),
-                BotCommand("sources", "How answers are grounded"),
-                BotCommand("privacy", "Data and privacy information"),
-                BotCommand("help", "How to use OLLM"),
-            ]
-        )
-        logger.info("OLLM initialized with knowledge version %s", services.rag.version)
+        try:
+            await app.bot.delete_webhook(drop_pending_updates=True)
+            logger.info("Cleared Telegram webhook and dropped pending updates")
+        except Exception as exc:
+            logger.warning("Could not clear webhook: %s", exc)
+        try:
+            await app.bot.set_my_commands(
+                [
+                    BotCommand("ask", "Ask an open-source contribution question"),
+                    BotCommand("about", "About OSS Let's Connect"),
+                    BotCommand("sources", "How answers are grounded"),
+                    BotCommand("privacy", "Data and privacy information"),
+                    BotCommand("help", "How to use OLLM"),
+                ]
+            )
+        except Exception as exc:
+            logger.warning("Could not set bot commands: %s", exc)
+        try:
+            await services.rag.initialize()
+            logger.info("OLLM initialized with knowledge version %s", services.rag.version)
+        except Exception as exc:
+            logger.error("RAG initialization failed at startup (bot remains online): %s", exc, exc_info=True)
 
     async def post_shutdown(app: Application) -> None:
         del app
@@ -69,7 +80,7 @@ def main() -> None:
 
     application.post_init = post_init
     application.post_shutdown = post_shutdown
-    application.run_polling(drop_pending_updates=False)
+    application.run_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":

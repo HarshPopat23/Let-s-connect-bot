@@ -3,8 +3,8 @@ services:
     name: let-s-connect-bot
     runtime: python
     plan: free
-    buildCommand: pip install -e . && python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5', cache_dir='/tmp/fastembed', threads=1)"
-    startCommand: ollm-index && ollm
+    buildCommand: pip install -e . && python -c "from fastembed import TextEmbedding; TextEmbedding('sentence-transformers/all-MiniLM-L6-v2', cache_dir='/tmp/fastembed', threads=1)"
+    startCommand: ollm
     envVars:
       - key: TELEGRAM_BOT_TOKEN
         sync: false
@@ -14,10 +14,6 @@ services:
         sync: false
       - key: QDRANT_API_KEY
         sync: false
-      - key: EMBEDDING_PROVIDER
-        value: fastembed
-      - key: FASTEMBED_MODEL
-        value: BAAI/bge-small-en-v1.5
       - key: FASTEMBED_THREADS
         value: "1"
       - key: OMP_NUM_THREADS
@@ -26,12 +22,6 @@ services:
         value: "1"
       - key: MKL_NUM_THREADS
         value: "1"
-      - key: MODEL_EASY
-        value: openai/gpt-oss-20b
-      - key: MODEL_STANDARD
-        value: openai/gpt-oss-120b
-      - key: MODEL_COMPLEX
-        value: openai/gpt-oss-120b
       - key: HF_HOME
         value: /tmp/fastembed/hf
       - key: FASTEMBED_CACHE_PATH
@@ -40,5 +30,3 @@ services:
         value: "1"
       - key: HF_HUB_ENABLE_HF_TRANSFER
         value: "0"
-
-

@@ -12,7 +12,7 @@ class FakeOllama:
     def __init__(self) -> None:
         self.chat_calls = 0
 
-    async def embed(self, texts, model):
+    async def embed(self, texts, model=""):
         del model
         return [[0.1, 0.2, 0.3] for _ in texts]
 
