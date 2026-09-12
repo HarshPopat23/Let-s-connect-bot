@@ -46,14 +46,16 @@ def make_settings(tmp_path: Path) -> Settings:
 
 
 @pytest.mark.asyncio
-async def test_refuses_when_retrieval_has_no_evidence(tmp_path: Path) -> None:
+async def test_answers_with_model_when_no_retrieval_hits(tmp_path: Path) -> None:
     state = SQLiteState(tmp_path / "state.sqlite3")
     await state.initialize()
-    rag = RAGService(make_settings(tmp_path), FakeOllama(), FakeVectorStore([]), state)
+    fake_model = FakeOllama()
+    rag = RAGService(make_settings(tmp_path), fake_model, FakeVectorStore([]), state)
     rag._knowledge_version = "test"
     result = await rag.answer("Will this unknown project select me?")
-    assert "could not find enough reliable information" in result.answer
-    assert result.model == "retrieval-only"
+    assert result.answer == "Read the contributor guide before choosing work [1]."
+    assert fake_model.chat_calls == 1
+    assert result.model in {"qwen3:4b", "mistral:7b-instruct", "mistral-nemo:12b"}
 
 
 @pytest.mark.asyncio

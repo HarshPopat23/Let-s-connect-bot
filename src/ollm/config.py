@@ -40,7 +40,7 @@ class Settings(BaseSettings):
 
     qdrant_collection: str = "ollm_knowledge"
     retrieval_limit: int = Field(default=6, ge=1, le=12)
-    retrieval_score_threshold: float = Field(default=0.45, ge=0, le=1)
+    retrieval_score_threshold: float = Field(default=0.30, ge=0, le=1)
     max_context_characters: int = Field(default=14_000, ge=2_000, le=50_000)
     answer_temperature: float = Field(default=0.15, ge=0, le=1)
     groq_timeout_seconds: float = Field(default=60, ge=5, le=300)
