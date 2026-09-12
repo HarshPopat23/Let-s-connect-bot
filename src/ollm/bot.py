@@ -5,7 +5,7 @@ import re
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ChatAction, ParseMode
-from telegram.error import BadRequest
+from telegram.error import BadRequest, Conflict, NetworkError, TimedOut
 from telegram.ext import (
     Application,
     ApplicationBuilder,
@@ -238,6 +238,9 @@ class OLLMBot:
 
     async def error_handler(self, update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
         del update
+        if isinstance(context.error, (Conflict, TimedOut, NetworkError)):
+            logger.warning("Transient Telegram polling notice: %s", context.error)
+            return
         logger.error("Unhandled Telegram update error", exc_info=context.error)
 
 
