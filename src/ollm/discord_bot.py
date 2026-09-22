@@ -120,7 +120,8 @@ class FeedbackView(discord.ui.View):
 class OLLMDiscordBot(commands.Bot):
     def __init__(self, settings: Settings, rag: RAGService, state: SQLiteState) -> None:
         intents = discord.Intents.default()
-        intents.message_content = True
+        # Do not request privileged intents like message_content so the bot connects
+        # smoothly without requiring manual intent toggles in the Discord Developer Portal.
         super().__init__(command_prefix="!", intents=intents)
         self.settings = settings
         self.rag = rag
