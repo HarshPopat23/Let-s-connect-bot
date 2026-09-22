@@ -275,10 +275,13 @@ class OLLMDiscordBot(commands.Bot):
         if message.author.bot:
             return
 
+        # Only handle DMs here, not @mentions in a public channel: a DM is naturally
+        # private to the asker, but a public-channel reply cannot be made ephemeral,
+        # so answering there would leak the asker's question and answer to everyone.
+        # Use /ask in a server channel for a private reply instead.
         is_dm = isinstance(message.channel, discord.DMChannel)
-        is_mentioned = self.user and self.user in message.mentions
 
-        if is_dm or is_mentioned:
+        if is_dm:
             clean_text = message.content
             if self.user:
                 clean_text = clean_text.replace(f"<@{self.user.id}>", "").replace(
@@ -317,7 +320,7 @@ class OLLMDiscordBot(commands.Bot):
             )
             return
 
-        await interaction.response.defer(thinking=True)
+        await interaction.response.defer(thinking=True, ephemeral=True)
         try:
             result = await self.rag.answer(question)
         except Exception:
@@ -326,7 +329,8 @@ class OLLMDiscordBot(commands.Bot):
             )
             await interaction.followup.send(
                 "OLLM could not process that question. The local model or knowledge service "
-                "may be temporarily unavailable. Please try again later."
+                "may be temporarily unavailable. Please try again later.",
+                ephemeral=True,
             )
             return
 
@@ -335,10 +339,10 @@ class OLLMDiscordBot(commands.Bot):
         parts = split_discord_text(formatted)
 
         for part in parts[:-1]:
-            await interaction.followup.send(part)
+            await interaction.followup.send(part, ephemeral=True)
 
         view = FeedbackView(self.state, result.cache_key, interaction.user.id)
-        await interaction.followup.send(parts[-1], view=view)
+        await interaction.followup.send(parts[-1], view=view, ephemeral=True)
 
     async def _handle_ask_message(self, message: discord.Message, question: str) -> None:
         if len(question) > self.settings.max_question_characters:
