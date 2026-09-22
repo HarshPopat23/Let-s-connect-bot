@@ -80,3 +80,32 @@ Valid indexable content.
     assert chunks[0].title == "Valid Guide"
 
 
+def test_nested_subheading_inherits_parent(tmp_path: Path) -> None:
+    (tmp_path / "faq.md").write_text(
+        """---
+title: Maintainer FAQ
+category: admin
+---
+
+# FAQ
+
+## 1. How do I start?
+
+### Answer
+
+Start with tools you use.
+
+### Checklist
+
+Step 1 and step 2.
+""",
+        encoding="utf-8",
+    )
+    chunks = load_knowledge(tmp_path)
+    assert len(chunks) == 2
+    assert chunks[0].section == "1. How do I start? - Answer"
+    assert "Start with tools you use." in chunks[0].text
+    assert chunks[1].section == "1. How do I start? - Checklist"
+    assert "Step 1 and step 2." in chunks[1].text
+
+

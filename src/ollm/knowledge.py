@@ -37,12 +37,27 @@ def _sections(body: str, default_title: str) -> list[tuple[str, str]]:
     preface = body[: matches[0].start()].strip()
     if preface:
         result.append((default_title, preface))
+    heading_hierarchy: dict[int, str] = {}
     for index, match in enumerate(matches):
+        level = len(match.group(1))
+        heading_text = match.group(2).strip()
+        heading_hierarchy[level] = heading_text
+        for d in list(heading_hierarchy.keys()):
+            if d > level:
+                del heading_hierarchy[d]
         start = match.end()
         end = matches[index + 1].start() if index + 1 < len(matches) else len(body)
         text = body[start:end].strip()
+        if level <= 2:
+            effective_heading = heading_text
+        else:
+            parent = heading_hierarchy.get(2) or heading_hierarchy.get(1) or default_title
+            if parent and parent != heading_text:
+                effective_heading = f"{parent} - {heading_text}"
+            else:
+                effective_heading = heading_text
         if text:
-            result.append((match.group(2).strip(), text))
+            result.append((effective_heading, text))
     return result
 
 
