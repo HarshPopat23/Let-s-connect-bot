@@ -38,7 +38,7 @@ Most members' journey through open source is described using four stages:
 
 # The community by the numbers
 
-As of its first year, the community has grown to 800+ members, has supported 500+ students through their first open-source milestones, has reach across 20+ open-source projects and ecosystems, and has run 10+ knowledge-sharing sessions.
+As of its first three months, the community has grown to 1000+ members, has supported 500+ students through their first open-source milestones, has reach across 20+ open-source projects and ecosystems, and has run 10+ knowledge-sharing sessions.
 
 # Ecosystem exposure
 
