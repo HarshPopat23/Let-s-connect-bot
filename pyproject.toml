@@ -20,6 +20,7 @@ dependencies = [
   "qdrant-client>=1.12,<2",
   "tenacity>=9,<10",
   "fastembed>=0.8.0",
+  "discord.py>=2.4,<3",
 ]
 
 [project.optional-dependencies]
@@ -31,6 +32,7 @@ dev = [
 
 [project.scripts]
 ollm = "ollm.main:main"
+ollm-discord = "ollm.main:discord_main"
 ollm-index = "ollm.cli:index_main"
 ollm-ask = "ollm.cli:ask_main"
 ollm-check = "ollm.cli:check_main"

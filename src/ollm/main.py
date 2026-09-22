@@ -9,6 +9,7 @@ from telegram.ext import Application
 
 from ollm.bot import OLLMBot
 from ollm.config import Settings
+from ollm.discord_bot import DiscordOLLMBot
 from ollm.logging_config import configure_logging
 from ollm.services import Services
 
@@ -81,6 +82,28 @@ def main() -> None:
     application.post_init = post_init
     application.post_shutdown = post_shutdown
     application.run_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
+
+
+def discord_main() -> None:
+    settings = Settings()
+    configure_logging(settings.log_level)
+    services = Services.create(settings)
+    client = DiscordOLLMBot(settings, services.rag, services.state).build()
+
+    async def runner() -> None:
+        port_env = os.environ.get("PORT")
+        health_server: asyncio.Server | None = None
+        if port_env and port_env.isdigit():
+            health_server = await _start_health_server(int(port_env))
+        try:
+            await client.start(settings.require_discord_bot_token())
+        finally:
+            if health_server:
+                health_server.close()
+                await health_server.wait_closed()
+            await services.close()
+
+    asyncio.run(runner())
 
 
 if __name__ == "__main__":
