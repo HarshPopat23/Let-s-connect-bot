@@ -241,16 +241,22 @@ class OLLMDiscordBot(commands.Bot):
         return user_id in self.settings.admin_user_ids
 
     async def setup_hook(self) -> None:
-        guild_id_str = self.settings.discord_guild_id.strip()
-        if guild_id_str:
+        if self.settings.discord_guild_id:
             try:
-                guild_id = int(guild_id_str)
-                guild_obj = discord.Object(id=guild_id)
+                guild_obj = discord.Object(id=self.settings.discord_guild_id)
                 self.tree.copy_global_to(guild=guild_obj)
                 synced = await self.tree.sync(guild=guild_obj)
-                logger.info("Synced %d Discord slash commands to guild %d", len(synced), guild_id)
+                logger.info(
+                    "Synced %d Discord slash commands to guild %d",
+                    len(synced),
+                    self.settings.discord_guild_id,
+                )
             except Exception as exc:
-                logger.warning("Failed to sync commands to guild %s: %s", guild_id_str, exc)
+                logger.warning(
+                    "Failed to sync commands to guild %d: %s",
+                    self.settings.discord_guild_id,
+                    exc,
+                )
         try:
             global_synced = await self.tree.sync()
             logger.info("Synced %d global Discord slash commands", len(global_synced))
@@ -258,7 +264,11 @@ class OLLMDiscordBot(commands.Bot):
             logger.warning("Failed to sync global Discord slash commands: %s", exc)
 
     async def on_ready(self) -> None:
-        logger.info("Logged in to Discord as %s (ID: %s)", self.user, self.user.id if self.user else "unknown")
+        logger.info(
+            "Logged in to Discord as %s (ID: %s)",
+            self.user,
+            self.user.id if self.user else "unknown",
+        )
 
     async def on_message(self, message: discord.Message) -> None:
         if message.author.bot:
@@ -270,7 +280,9 @@ class OLLMDiscordBot(commands.Bot):
         if is_dm or is_mentioned:
             clean_text = message.content
             if self.user:
-                clean_text = clean_text.replace(f"<@{self.user.id}>", "").replace(f"<@!{self.user.id}>", "")
+                clean_text = clean_text.replace(f"<@{self.user.id}>", "").replace(
+                    f"<@!{self.user.id}>", ""
+                )
             clean_text = clean_text.strip()
             if clean_text:
                 await self._handle_ask_message(message, clean_text)
@@ -308,7 +320,9 @@ class OLLMDiscordBot(commands.Bot):
         try:
             result = await self.rag.answer(question)
         except Exception:
-            logger.exception("Question processing failed in Discord for user_id=%s", interaction.user.id)
+            logger.exception(
+                "Question processing failed in Discord for user_id=%s", interaction.user.id
+            )
             await interaction.followup.send(
                 "OLLM could not process that question. The local model or knowledge service "
                 "may be temporarily unavailable. Please try again later."
@@ -351,7 +365,9 @@ class OLLMDiscordBot(commands.Bot):
             try:
                 result = await self.rag.answer(question)
             except Exception:
-                logger.exception("Question processing failed in Discord for user_id=%s", message.author.id)
+                logger.exception(
+                    "Question processing failed in Discord for user_id=%s", message.author.id
+                )
                 await message.reply(
                     "OLLM could not process that question. The local model or knowledge service "
                     "may be temporarily unavailable. Please try again later."
@@ -367,3 +383,13 @@ class OLLMDiscordBot(commands.Bot):
 
             view = FeedbackView(self.state, result.cache_key, message.author.id)
             await message.reply(parts[-1], view=view)
+
+
+class DiscordOLLMBot:
+    """Compatibility wrapper for Discord standalone entrypoint."""
+
+    def __init__(self, settings: Settings, rag: RAGService, state: SQLiteState) -> None:
+        self.bot = OLLMDiscordBot(settings, rag, state)
+
+    def build(self) -> OLLMDiscordBot:
+        return self.bot

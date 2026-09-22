@@ -32,6 +32,7 @@ dev = [
 
 [project.scripts]
 ollm = "ollm.main:main"
+ollm-discord = "ollm.main:discord_main"
 ollm-index = "ollm.cli:index_main"
 ollm-ask = "ollm.cli:ask_main"
 ollm-check = "ollm.cli:check_main"

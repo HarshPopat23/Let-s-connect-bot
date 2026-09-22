@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     admin_user_ids: Annotated[list[int], NoDecode] = Field(default_factory=list)
 
     discord_bot_token: str = ""
-    discord_guild_id: str = ""
+    discord_guild_id: int = 0
 
     groq_api_key: str = ""
     groq_base_url: str = "https://api.groq.com/openai/v1"
@@ -66,6 +66,13 @@ class Settings(BaseSettings):
             return []
         return _csv_ints(value)  # type: ignore[arg-type]
 
+    @field_validator("discord_guild_id", mode="before")
+    @classmethod
+    def parse_discord_guild_id(cls, value: object) -> int:
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return 0
+        return int(value)
+
     @field_validator("groq_base_url", "qdrant_url")
     @classmethod
     def strip_trailing_slash(cls, value: str) -> str:
@@ -82,9 +89,12 @@ class Settings(BaseSettings):
         return self.telegram_bot_token.strip()
 
     def require_discord_token(self) -> str:
+        return self.require_discord_bot_token()
+
+    def require_discord_bot_token(self) -> str:
         if not self.discord_bot_token.strip():
             raise RuntimeError(
-                "DISCORD_BOT_TOKEN is empty. Please set DISCORD_BOT_TOKEN in your environment."
+                "DISCORD_BOT_TOKEN is empty. Copy .env.example to .env and add the token."
             )
         return self.discord_bot_token.strip()
 
