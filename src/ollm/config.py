@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     telegram_allowed_chat_ids: Annotated[list[int], NoDecode] = Field(default_factory=list)
     admin_user_ids: Annotated[list[int], NoDecode] = Field(default_factory=list)
 
+    discord_bot_token: str = ""
+    discord_guild_id: str = ""
+
     groq_api_key: str = ""
     groq_base_url: str = "https://api.groq.com/openai/v1"
     embedding_provider: str = "fastembed"
@@ -69,11 +72,21 @@ class Settings(BaseSettings):
         return value.rstrip("/")
 
     def require_bot_token(self) -> str:
+        return self.require_telegram_token()
+
+    def require_telegram_token(self) -> str:
         if not self.telegram_bot_token.strip():
             raise RuntimeError(
                 "TELEGRAM_BOT_TOKEN is empty. Copy .env.example to .env and add the token."
             )
         return self.telegram_bot_token.strip()
+
+    def require_discord_token(self) -> str:
+        if not self.discord_bot_token.strip():
+            raise RuntimeError(
+                "DISCORD_BOT_TOKEN is empty. Please set DISCORD_BOT_TOKEN in your environment."
+            )
+        return self.discord_bot_token.strip()
 
     def require_groq_api_key(self) -> str:
         if not self.groq_api_key.strip():

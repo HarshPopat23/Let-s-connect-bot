@@ -8,6 +8,10 @@ services:
     envVars:
       - key: TELEGRAM_BOT_TOKEN
         sync: false
+      - key: DISCORD_BOT_TOKEN
+        sync: false
+      - key: DISCORD_GUILD_ID
+        sync: false
       - key: GROQ_API_KEY
         sync: false
       - key: QDRANT_URL
